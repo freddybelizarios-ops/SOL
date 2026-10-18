@@ -1,0 +1,64 @@
+# Actualiza cada mañana el dólar y la inflación (BCRP) y las tasas por entidad (SBS).
+# Seguridad: sin acciones de terceros, permisos mínimos y solo puede modificar data/data.json.
+name: Actualizar datos (BCRP y SBS)
+
+on:
+  schedule:
+    - cron: "30 13 * * *"     # todos los días, 8:30 a.m. hora de Lima
+  workflow_dispatch: {}        # botón "Run workflow" para ejecutarlo a mano
+
+permissions: {}
+
+concurrency:
+  group: actualizar-datos
+  cancel-in-progress: false
+
+jobs:
+  actualizar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      pages: write
+    steps:
+      - name: Descargar el repositorio
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          AUTH=$(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)
+          echo "::add-mask::$AUTH"
+          git -c http.extraHeader="AUTHORIZATION: basic $AUTH" clone --depth 1 "https://github.com/$REPO.git" repo
+
+      - name: Consultar BCRP y SBS y actualizar data.json
+        working-directory: repo
+        run: python3 scripts/actualizar_datos.py
+
+      - name: Guardar y publicar
+        if: ${{ !cancelled() }}
+        working-directory: repo
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- data/data.json; then
+            echo "Sin cambios que guardar."
+            exit 0
+          fi
+          if git status --porcelain | grep -v ' data/data.json$' | grep -q .; then
+            echo "Cambios inesperados fuera de data/data.json. Se aborta por seguridad."
+            git status --porcelain
+            exit 1
+          fi
+          python3 scripts/actualizar_datos.py --validar
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/data.json
+          git commit -m "Datos BCRP y SBS $(TZ=America/Lima date +%Y-%m-%d)"
+          AUTH=$(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)
+          echo "::add-mask::$AUTH"
+          git -c http.extraHeader="AUTHORIZATION: basic $AUTH" push origin HEAD
+          curl -fsS -X POST -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/$REPO/pages/builds" >/dev/null || echo "Aviso: Pages publicará en su próximo ciclo."

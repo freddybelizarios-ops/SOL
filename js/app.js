@@ -79,7 +79,12 @@
     }
     const asOf = (typeof d.rates.asOf === 'string' && /^\d{4}-\d{2}(-\d{2})?$/.test(d.rates.asOf)) ? d.rates.asOf : '';
     const source = d.rates.source === 'SBS' ? 'SBS' : 'referencial';
-    return { updated: d.updated, inflation: inflation, fx: fx, rates: rates, ratesAsOf: asOf, ratesSource: source };
+    let bankAvg = null;
+    if (d.bankAvg && typeof d.bankAvg === 'object' && typeof d.bankAvg.period === 'string' &&
+        LABEL_RE.test(d.bankAvg.period) && isNum(d.bankAvg.value, 0, 25)) {
+      bankAvg = { period: d.bankAvg.period, value: d.bankAvg.value };
+    }
+    return { updated: d.updated, inflation: inflation, fx: fx, rates: rates, ratesAsOf: asOf, ratesSource: source, bankAvg: bankAvg };
   }
 
   const DEFAULT_DATA = validateData(DEFAULT_RAW);
@@ -305,6 +310,14 @@
     $('bestBox').replaceChildren('🏆 Con ', b(fmtS(monto)), ' a ', b(meses + ' meses'), ': ', b(best.name),
       ' te da ', b(fmtS(gain(best.rate))), ' — ', b(fmtS(gain(best.rate) - gain(mine))),
       ' más que tu cuenta actual (' + fmtPct(mine) + ').');
+
+    const ba = $('bankAvg');
+    if (state.data.bankAvg) {
+      const v = state.data.bankAvg.value;
+      ba.replaceChildren('🏦 Promedio de todos los bancos: ', b(fmtPct(v)), ' (' + state.data.bankAvg.period + ')',
+        el('span', 'note', 'Fuente BCRP, depósitos a plazo de 360 días a más. Se actualiza solo cada mes. Con tu monto ganarías ' + fmtS(gain(v)) + '.'));
+      ba.classList.remove('hidden');
+    } else { ba.classList.add('hidden'); }
 
     const body = $('rateBody');
     body.replaceChildren();

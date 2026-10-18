@@ -157,3 +157,6 @@ tr.mine td { background: #fef2f2; }
   .tabbar button:hover, .chip:hover, .subtabs button:hover { background: #f9fafb; }
   .tabbar button.active:hover { background: #fef2f2; }
 }
+
+.bench { background: #f5f3ff; border: 1px solid #ddd6fe; border-radius: 10px; padding: 9px 13px; margin-bottom: 10px; font-size: 12.5px; line-height: 1.45; color: #4c1d95; }
+.bench .note { display: block; font-size: 11px; color: var(--muted); margin-top: 2px; }

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Actualiza data/data.json con datos oficiales:
-  - Dólar e inflación: API del BCRP.
+  - Dólar, inflación y promedio de tasas de bancos (depósitos a plazo > 360 días): API del BCRP.
   - Las tasas por entidad (SBS) NO se consultan automáticamente: la web de la SBS tiene
     protección anti-robots. Se mantienen las guardadas en data.json.
 
@@ -35,6 +35,7 @@ DATA_FILE = ROOT / "data" / "data.json"
 API = "https://estadisticas.bcrp.gob.pe/estadisticas/series/api/{serie}/json/{ini}/{fin}"
 SERIE_INFLACION = "PN01273PM"   # IPC Lima Metropolitana, var% 12 meses
 SERIE_DOLAR = "PD04640PD"       # Tipo de cambio venta, sistema bancario SBS
+SERIE_PROM_BANCOS = "PN07815NM" # Tasa pasiva promedio de bancos, depósitos a plazo 360 días a más (MN)
 LIMA = timezone(timedelta(hours=-5))
 
 MESES = {"Ene": 1, "Feb": 2, "Mar": 3, "Abr": 4, "May": 5, "Jun": 6,
@@ -334,6 +335,31 @@ def actualizar_tasas(rates_actuales, hoy, descargar_fn=descargar):
     return {"source": "SBS", "asOf": hoy.strftime("%Y-%m-%d"), "items": items}, alertas, cambios
 
 
+# ---------------------------------------------------------------- promedio de bancos (BCRP)
+def actualizar_prom_bancos(nueva, hoy, descargar_fn=descargar):
+    """Actualiza nueva['bankAvg']. Devuelve (cambios, alertas). Nunca afecta al resto de datos."""
+    serie = leer_serie(SERIE_PROM_BANCOS, f"{hoy.year - 1}-1", f"{hoy.year}-12", descargar_fn)
+    if not serie:
+        print("  BCRP sin datos del promedio de bancos: se conserva el anterior.")
+        return [], []
+    etiqueta, valor = serie[-1][0], round(serie[-1][1], 2)
+    try:
+        validar_serie([(etiqueta, valor)], clave_mes, 0.5, 15, 99, "promedio bancos")
+        previo = nueva.get("bankAvg")
+        if previo:
+            if clave_mes(etiqueta) < clave_mes(previo["period"]):
+                raise DatosSospechosos("promedio bancos: el dato retrocedió en el tiempo")
+            if abs(valor - previo["value"]) > 2:
+                raise DatosSospechosos(f"promedio bancos: salto anormal ({previo['value']} -> {valor})")
+    except DatosSospechosos as e:
+        return [], [str(e)]
+    nuevo = {"source": "BCRP", "period": etiqueta, "value": valor}
+    if nuevo == nueva.get("bankAvg"):
+        return [], []
+    nueva["bankAvg"] = nuevo
+    return [f"promedio bancos {etiqueta} = {valor}%"], []
+
+
 # ---------------------------------------------------------------- validación final (igual que la app)
 def validar_data(d):
     def puntos(arr, lo, hi):
@@ -353,6 +379,10 @@ def validar_data(d):
         assert isinstance(r[0], str) and LABEL_RE.match(r[0])
         assert r[1] in ("caja", "banco", "fin")
         assert isinstance(r[2], (int, float)) and 0 <= r[2] <= 25
+    if "bankAvg" in d:
+        b = d["bankAvg"]
+        assert isinstance(b, dict) and isinstance(b.get("period"), str) and LABEL_RE.match(b["period"])
+        assert isinstance(b.get("value"), (int, float)) and 0 <= b["value"] <= 25
 
 
 # ---------------------------------------------------------------- principal
@@ -424,11 +454,16 @@ def main(argv):
         alertas.append(f"BCRP: {e}")
         nueva, cambios = json.loads(json.dumps(data)), []
 
-    # 2) Tasas por entidad: la web de la SBS bloquea a propósito el acceso automático
+    # 2) Promedio de tasas de bancos (BCRP, mensual): referencia automática
+    c_prom, a_prom = actualizar_prom_bancos(nueva, hoy)
+    cambios += c_prom
+    alertas += a_prom
+
+    # 3) Tasas por entidad: la web de la SBS bloquea a propósito el acceso automático
     #    (protección anti-robots), así que NO se consultan aquí. Se conservan las de data.json,
     #    que se actualizan aparte leyendo la SBS como una visita normal de navegador.
 
-    # 3) Validación final idéntica a la de la app antes de escribir
+    # 4) Validación final idéntica a la de la app antes de escribir
     try:
         validar_data(nueva)
     except Exception as e:  # noqa: BLE001

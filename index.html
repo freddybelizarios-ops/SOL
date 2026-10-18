@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="es-PE">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self'; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'; upgrade-insecure-requests">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#b91c1c">
+<meta name="description" content="Soles: dólar, inflación y las mejores tasas de ahorro del Perú, con calculadoras de grati, CTS e interés compuesto.">
+<title>Soles — Finanzas Perú</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="stylesheet" href="css/styles.css">
+<script src="js/app.js" defer></script>
+</head>
+<body>
+<div class="app">
+  <header class="appbar">
+    <div>
+      <h1>Soles <span class="flag">PE</span></h1>
+      <p>Tu dinero, la inflación y las mejores tasas del Perú</p>
+    </div>
+    <button id="installBtn" class="install hidden" type="button">Instalar</button>
+  </header>
+
+  <main class="content">
+    <div class="status" id="status" aria-live="polite">Cargando…</div>
+
+    <!-- ============ INICIO ============ -->
+    <section class="view active" id="v-inicio">
+      <div class="dash-top">
+      <div class="card">
+        <div class="row">
+          <h2>💵 Dólar (venta, sistema bancario)</h2>
+          <span class="sub" id="fxDate"></span>
+        </div>
+        <div class="row">
+          <span class="big" id="fxVal">—</span>
+          <span class="sub" id="fxDelta"></span>
+        </div>
+        <div class="chart spark" id="fxSpark"></div>
+      </div>
+      <div class="grid2">
+        <div class="card">
+          <h2>📈 Inflación anual</h2>
+          <div class="big" id="infVal">—</div>
+          <div class="sub" id="infMonth"></div>
+          <span class="badge" id="infBadge"></span>
+        </div>
+        <div class="card">
+          <h2>🏆 Mejor tasa</h2>
+          <div class="big pos" id="bestRate">—</div>
+          <div class="sub" id="bestName"></div>
+          <span class="badge in" id="bestBadge">Plazo fijo en soles</span>
+        </div>
+      </div>
+      </div>
+      <div class="card">
+        <h2>Inflación — evolución (banda verde = meta BCRP 1–3%)</h2>
+        <div class="chart" id="infChart"></div>
+        <div class="readout" id="infReadout">Toca el gráfico para ver cada mes</div>
+      </div>
+      <div class="card mobile-only">
+        <h2>Accesos rápidos</h2>
+        <div class="chips">
+          <button class="chip" type="button" data-go="tasas"><span class="ico">🏦</span>Comparar tasas</button>
+          <button class="chip" type="button" data-go="calc"><span class="ico">🧮</span>Calculadoras</button>
+          <button class="chip" type="button" data-go="ahorros"><span class="ico">💰</span>Mis ahorros</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ TASAS ============ -->
+    <section class="view" id="v-tasas">
+      <div class="card">
+        <h2>🏦 ¿Dónde gana más tu dinero?</h2>
+        <div class="grid2 tasas-form">
+          <div class="field">
+            <label for="monto">Monto (S/)</label>
+            <input type="number" id="monto" inputmode="decimal" min="0" max="1000000000" step="100" value="25500">
+          </div>
+          <div class="field">
+            <label for="plazo">Plazo</label>
+            <select id="plazo">
+              <option value="6">6 meses</option>
+              <option value="12" selected>1 año</option>
+              <option value="24">2 años</option>
+              <option value="36">3 años</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="miTasa">Tasa de mi cuenta actual (% anual)</label>
+            <input type="number" id="miTasa" inputmode="decimal" min="0" max="25" step="0.01" value="0.33">
+          </div>
+        </div>
+        <div class="best" id="bestBox"></div>
+        <table>
+          <thead><tr><th>Entidad</th><th class="num">TEA</th><th class="num">Ganancia</th><th class="num">Real</th></tr></thead>
+          <tbody id="rateBody"></tbody>
+        </table>
+        <p class="disclaimer" id="ratesNote"></p>
+      </div>
+    </section>
+
+    <!-- ============ CALCULADORAS ============ -->
+    <section class="view" id="v-calc">
+      <div class="subtabs">
+        <button type="button" class="active" data-sub="grati">Gratificación</button>
+        <button type="button" data-sub="cts">CTS</button>
+        <button type="button" data-sub="comp">Interés compuesto</button>
+        <button type="button" data-sub="meta">Meta de ahorro</button>
+      </div>
+      <div class="calc-grid">
+
+      <div class="subview active" id="s-grati">
+        <div class="card">
+          <h2>🎁 ¿Cuánto me toca de grati?</h2>
+          <div class="field"><label for="gSueldo">Sueldo bruto mensual (S/)</label><input type="number" id="gSueldo" inputmode="decimal" value="2500" min="0" max="1000000" step="50"></div>
+          <div class="field"><label for="gMeses">Meses completos trabajados en el semestre</label>
+            <select id="gMeses"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option selected>6</option></select>
+          </div>
+          <div class="field"><label for="gReg">Régimen</label>
+            <select id="gReg"><option value="general" selected>General (planilla)</option><option value="pyme">Pequeña empresa (50%)</option></select>
+          </div>
+          <div class="result" id="gRes"></div>
+          <p class="disclaimer">Incluye bonificación extraordinaria del 9% (EsSalud). Cálculo referencial, régimen laboral privado.</p>
+        </div>
+      </div>
+
+      <div class="subview" id="s-cts">
+        <div class="card">
+          <h2>🏧 ¿Cuánto me depositan de CTS?</h2>
+          <div class="field"><label for="cSueldo">Sueldo bruto mensual (S/)</label><input type="number" id="cSueldo" inputmode="decimal" value="2500" min="0" max="1000000" step="50"></div>
+          <div class="field"><label for="cMeses">Meses completos trabajados en el semestre</label>
+            <select id="cMeses"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option selected>6</option></select>
+          </div>
+          <div class="result" id="cRes"></div>
+          <p class="disclaimer">Remuneración computable = sueldo + 1/6 de la última gratificación. Referencial (régimen general, sin horas extra ni comisiones).</p>
+        </div>
+      </div>
+
+      <div class="subview" id="s-comp">
+        <div class="card">
+          <h2>📊 Proyecta tu inversión</h2>
+          <div class="grid2">
+            <div class="field"><label for="pIni">Monto inicial (S/)</label><input type="number" id="pIni" inputmode="decimal" value="25500" min="0" max="1000000000" step="100"></div>
+            <div class="field"><label for="pAporte">Aporte mensual (S/)</label><input type="number" id="pAporte" inputmode="decimal" value="500" min="0" max="10000000" step="50"></div>
+          </div>
+          <div class="grid2">
+            <div class="field"><label for="pTasa">Tasa anual (%)</label><input type="number" id="pTasa" inputmode="decimal" value="8.5" min="0" max="30" step="0.1"></div>
+            <div class="field"><label for="pAnios">Años</label><input type="number" id="pAnios" inputmode="numeric" value="10" min="1" max="40" step="1"></div>
+          </div>
+          <div class="result" id="pRes"></div>
+          <div class="chart" id="pChart"></div>
+          <div class="readout" id="pReadout">Toca el gráfico para ver cada año</div>
+        </div>
+      </div>
+
+      <div class="subview" id="s-meta">
+        <div class="card">
+          <h2>🎯 ¿Cuánto ahorrar al mes para tu meta?</h2>
+          <div class="field"><label for="mMeta">Meta (S/) — inicial de depa, auto, estudios…</label><input type="number" id="mMeta" inputmode="decimal" value="20000" min="0" max="1000000000" step="500"></div>
+          <div class="grid2">
+            <div class="field"><label for="mIni">Ya tengo (S/)</label><input type="number" id="mIni" inputmode="decimal" value="0" min="0" max="1000000000" step="100"></div>
+            <div class="field"><label for="mAnios">Plazo (años)</label><input type="number" id="mAnios" inputmode="numeric" value="3" min="1" max="30" step="1"></div>
+          </div>
+          <div class="field"><label for="mTasa">Tasa anual (%)</label><input type="number" id="mTasa" inputmode="decimal" value="8.5" min="0" max="30" step="0.1"></div>
+          <div class="result" id="mRes"></div>
+        </div>
+      </div>
+      </div>
+    </section>
+
+    <!-- ============ MIS AHORROS ============ -->
+    <section class="view" id="v-ahorros">
+      <div class="ahorros-grid">
+      <div class="card a-res" id="ahorrosResumen"></div>
+      <div class="card a-form">
+        <h2>➕ Registrar depósito o cuenta</h2>
+        <div class="field"><label for="dNombre">Entidad</label><input type="text" id="dNombre" maxlength="40" autocomplete="off" placeholder="Ej. Caja Arequipa"></div>
+        <div class="grid2">
+          <div class="field"><label for="dMonto">Monto (S/)</label><input type="number" id="dMonto" inputmode="decimal" min="0" max="1000000000" step="100" placeholder="10000"></div>
+          <div class="field"><label for="dTasa">TEA (%)</label><input type="number" id="dTasa" inputmode="decimal" min="0" max="30" step="0.01" placeholder="8.5"></div>
+        </div>
+        <div class="field"><label for="dVence">Vence (opcional)</label><input type="date" id="dVence" min="2000-01-01" max="2100-12-31"></div>
+        <div class="formerr hidden" id="dErr"></div>
+        <button class="btn" type="button" id="dGuardar">Guardar</button>
+        <p class="disclaimer">🔒 Tus datos se guardan solo en este celular. No se envían a ningún servidor.</p>
+      </div>
+      <div class="card a-list">
+        <h2>💰 Mis depósitos</h2>
+        <div id="depList"></div>
+      </div>
+      </div>
+    </section>
+  </main>
+
+  <nav class="tabbar" aria-label="Secciones">
+    <button type="button" class="active" data-view="inicio"><span class="ico">🏠</span>Inicio</button>
+    <button type="button" data-view="tasas"><span class="ico">🏦</span>Tasas</button>
+    <button type="button" data-view="calc"><span class="ico">🧮</span>Calcular</button>
+    <button type="button" data-view="ahorros"><span class="ico">💰</span>Ahorros</button>
+  </nav>
+</div>
+<noscript><p class="noscript">Soles necesita JavaScript activado.</p></noscript>
+</body>
+</html>

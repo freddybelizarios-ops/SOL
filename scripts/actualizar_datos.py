@@ -2,12 +2,12 @@
 """
 Actualiza data/data.json con datos oficiales:
   - Dólar e inflación: API del BCRP.
-  - Tasas de depósitos a plazo (> 360 días, soles) por entidad: tablas públicas de la SBS
-    (bancos, cajas municipales y financieras).
+  - Las tasas por entidad (SBS) NO se consultan automáticamente: la web de la SBS tiene
+    protección anti-robots. Se mantienen las guardadas en data.json.
 
 Diseño de seguridad:
   - Solo usa la librería estándar de Python (cero dependencias que puedan ser comprometidas).
-  - Solo se conecta por HTTPS a estadisticas.bcrp.gob.pe y www.sbs.gob.pe.
+  - Solo se conecta por HTTPS a estadisticas.bcrp.gob.pe.
   - Valida cada valor (rangos, saltos razonables, nombres). Si algo luce raro, no lo usa.
   - Escribe de forma atómica y solo modifica data/data.json.
 
@@ -52,7 +52,7 @@ class DatosSospechosos(Exception):
 
 
 # ---------------------------------------------------------------- red
-HOSTS_PERMITIDOS = ("https://estadisticas.bcrp.gob.pe/", "https://www.sbs.gob.pe/")
+HOSTS_PERMITIDOS = ("https://estadisticas.bcrp.gob.pe/",)
 
 
 def descargar(url, intentos=3):
@@ -424,16 +424,9 @@ def main(argv):
         alertas.append(f"BCRP: {e}")
         nueva, cambios = json.loads(json.dumps(data)), []
 
-    # 2) SBS: tasas por entidad
-    try:
-        rates, alertas_sbs, cambios_sbs = actualizar_tasas(data["rates"], hoy)
-    except Exception as e:  # noqa: BLE001  (un fallo de la SBS nunca debe impedir guardar lo del BCRP)
-        rates, alertas_sbs, cambios_sbs = None, [f"SBS: error inesperado {e!r}"], []
-    alertas += alertas_sbs
-    if rates:
-        nueva["rates"] = rates
-        cambios += cambios_sbs
-        nueva["updated"] = hoy.strftime("%Y-%m-%d")
+    # 2) Tasas por entidad: la web de la SBS bloquea a propósito el acceso automático
+    #    (protección anti-robots), así que NO se consultan aquí. Se conservan las de data.json,
+    #    que se actualizan aparte leyendo la SBS como una visita normal de navegador.
 
     # 3) Validación final idéntica a la de la app antes de escribir
     try:

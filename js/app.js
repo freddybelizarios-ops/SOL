@@ -322,7 +322,7 @@
     });
     const sbs = state.data.ratesSource === 'SBS';
     $('ratesNote').textContent = '🛡️ Entidades supervisadas por la SBS y cubiertas por el Fondo de Seguro de Depósitos (hasta ~S/117,200 por persona y entidad). ' +
-      (sbs ? 'TEA promedio oficial de la SBS para depósitos a plazo en soles a más de 360 días, operaciones del mes'
+      (sbs ? 'TEA promedio oficial de la SBS (operaciones reales recientes) para depósitos a plazo en soles a más de 360 días'
            : 'TEA referenciales en soles a más de 360 días') +
       (state.data.ratesAsOf ? ' (' + state.data.ratesAsOf + ')' : '') +
       '. Las campañas de cada entidad pueden pagar más: confírmalo antes de contratar. "Real" = TEA − inflación vigente (' + fmtPct(infl, 1) + ').';

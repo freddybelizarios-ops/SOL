@@ -5,18 +5,6 @@
   "source": "BCRP/INEI",
   "points": [
    [
-    "Oct.2023",
-    4.34
-   ],
-   [
-    "Nov.2023",
-    3.64
-   ],
-   [
-    "Dic.2023",
-    3.24
-   ],
-   [
     "Ene.2024",
     3.02
    ],
@@ -34,7 +22,7 @@
    ],
    [
     "May.2024",
-    2.0
+    2
    ],
    [
     "Jun.2024",
@@ -154,120 +142,24 @@
   "source": "BCRP",
   "points": [
    [
-    "03.Set.26",
-    3.365
+    "24.Jul.26",
+    3.411
    ],
    [
-    "04.Set.26",
-    3.369
+    "31.Jul.26",
+    3.4
    ],
    [
-    "07.Set.26",
-    3.372
-   ],
-   [
-    "08.Set.26",
-    3.36
-   ],
-   [
-    "09.Set.26",
-    3.362
-   ],
-   [
-    "10.Set.26",
-    3.373
-   ],
-   [
-    "11.Set.26",
-    3.371
-   ],
-   [
-    "14.Set.26",
-    3.383
-   ],
-   [
-    "15.Set.26",
-    3.379
-   ],
-   [
-    "16.Set.26",
-    3.372
-   ],
-   [
-    "17.Set.26",
-    3.368
-   ],
-   [
-    "18.Set.26",
-    3.362
-   ],
-   [
-    "21.Set.26",
-    3.362
-   ],
-   [
-    "22.Set.26",
-    3.362
-   ],
-   [
-    "23.Set.26",
-    3.385
-   ],
-   [
-    "24.Set.26",
-    3.406
-   ],
-   [
-    "25.Set.26",
-    3.425
-   ],
-   [
-    "28.Set.26",
-    3.44
-   ],
-   [
-    "29.Set.26",
-    3.45
-   ],
-   [
-    "30.Set.26",
-    3.437
+    "03.Ago.26",
+    3.402
    ],
    [
     "01.Oct.26",
-    3.454
-   ],
-   [
-    "02.Oct.26",
-    3.442
-   ],
-   [
-    "05.Oct.26",
-    3.435
-   ],
-   [
-    "06.Oct.26",
-    3.437
-   ],
-   [
-    "07.Oct.26",
     3.453
    ],
    [
-    "09.Oct.26",
-    3.457
-   ],
-   [
-    "12.Oct.26",
-    3.448
-   ],
-   [
-    "13.Oct.26",
-    3.439
-   ],
-   [
-    "14.Oct.26",
-    3.44
+    "02.Oct.26",
+    3.436
    ],
    [
     "15.Oct.26",
@@ -276,82 +168,173 @@
   ]
  },
  "rates": {
-  "asOf": "2026-08",
+  "source": "SBS",
+  "asOf": "2026-10-16",
   "items": [
+   [
+    "Caja Maynas",
+    "caja",
+    5.75
+   ],
+   [
+    "Caja Metropolitana",
+    "caja",
+    5.71
+   ],
+   [
+    "Financiera Confianza",
+    "fin",
+    5.7
+   ],
+   [
+    "Caja Paita",
+    "caja",
+    5.59
+   ],
+   [
+    "Efectiva",
+    "banco",
+    5.52
+   ],
+   [
+    "Financiera Proempresa",
+    "fin",
+    5.5
+   ],
+   [
+    "InFinance XP",
+    "fin",
+    5.37
+   ],
+   [
+    "Caja Ica",
+    "caja",
+    5.35
+   ],
+   [
+    "Financiera Surgir",
+    "fin",
+    5.29
+   ],
+   [
+    "Caja Tacna",
+    "caja",
+    5.27
+   ],
    [
     "Caja Arequipa",
     "caja",
-    8.5
-   ],
-   [
-    "Caja Huancayo",
-    "caja",
-    8.25
-   ],
-   [
-    "Caja Piura",
-    "caja",
-    8
+    5.12
    ],
    [
     "Caja Cusco",
     "caja",
-    7.13
+    5.05
    ],
    [
-    "Caja Incasur",
+    "Caja Huancayo",
     "caja",
-    6.04
+    5.04
    ],
    [
-    "Caja Los Andes",
-    "caja",
-    5.96
-   ],
-   [
-    "Caja Maynas",
-    "caja",
-    5.94
-   ],
-   [
-    "Caja Del Centro",
-    "caja",
-    5.88
-   ],
-   [
-    "Financiera Efectiva",
+    "Financiera Qapaq",
     "fin",
-    5.87
+    4.98
    ],
    [
-    "Interbank",
-    "banco",
-    3.76
+    "Caja Piura",
+    "caja",
+    4.82
    ],
    [
-    "Banco Falabella",
+    "BCI",
     "banco",
-    3.65
+    4.81
+   ],
+   [
+    "Mibanco",
+    "banco",
+    4.78
+   ],
+   [
+    "Alfin Banco",
+    "banco",
+    4.67
+   ],
+   [
+    "Compartamos",
+    "banco",
+    4.67
+   ],
+   [
+    "Banco Pichincha",
+    "banco",
+    4.6
    ],
    [
     "Santander",
     "banco",
-    3.44
-   ],
-   [
-    "BBVA",
-    "banco",
-    3.27
+    4.55
    ],
    [
     "Scotiabank",
     "banco",
-    3.07
+    4.45
+   ],
+   [
+    "Interbank",
+    "banco",
+    4.37
+   ],
+   [
+    "Banco GNB",
+    "banco",
+    4.36
+   ],
+   [
+    "Banco de Comercio",
+    "banco",
+    4.29
+   ],
+   [
+    "Caja Trujillo",
+    "caja",
+    4.18
+   ],
+   [
+    "Caja Del Santa",
+    "caja",
+    4.14
+   ],
+   [
+    "Banco Ripley",
+    "banco",
+    4.0
+   ],
+   [
+    "Banco Falabella",
+    "banco",
+    3.69
+   ],
+   [
+    "BBVA",
+    "banco",
+    3.67
+   ],
+   [
+    "BanBif",
+    "banco",
+    3.62
+   ],
+   [
+    "Santander Consumer",
+    "banco",
+    3.42
    ],
    [
     "BCP",
     "banco",
-    2.87
+    2.99
    ]
   ]
  }

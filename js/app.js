@@ -21,30 +21,12 @@
   const LABEL_RE = /^[0-9A-Za-zÁÉÍÓÚÜáéíóúüÑñ.\- ()]{1,40}$/;
   const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
   const MAX_DEPS = 50;
+  // Rangos válidos de cada serie de mercado (deben coincidir con el actualizador).
+  const MKT_RANGES = { bvl: [1000, 500000], gold: [100, 20000], copper: [50, 3000], ref: [0, 20], bond10: [0, 25], fxBuy: [1, 10] };
+  const UIT_2026 = 5500, TOPE_AFP = 12672.65;
 
   // Datos de respaldo (se usan si data/data.json no está disponible o no es válido).
-  const DEFAULT_RAW = {
-    version: 1,
-    updated: '2026-10-04',
-    inflation: { source: 'BCRP/INEI', points: [
-      ['Ene.2024',3.02],['Feb.2024',3.29],['Mar.2024',3.05],['Abr.2024',2.42],['May.2024',2.00],['Jun.2024',2.29],
-      ['Jul.2024',2.13],['Ago.2024',2.03],['Sep.2024',1.78],['Oct.2024',2.01],['Nov.2024',2.27],['Dic.2024',1.97],
-      ['Ene.2025',1.85],['Feb.2025',1.48],['Mar.2025',1.28],['Abr.2025',1.65],['May.2025',1.69],['Jun.2025',1.69],
-      ['Jul.2025',1.69],['Ago.2025',1.11],['Sep.2025',1.36],['Oct.2025',1.35],['Nov.2025',1.37],['Dic.2025',1.51],
-      ['Ene.2026',1.70],['Feb.2026',2.21],['Mar.2026',3.80],['Abr.2026',4.01],['May.2026',3.91],['Jun.2026',4.01],
-      ['Jul.2026',4.07],['Ago.2026',4.44]
-    ]},
-    fx: { source: 'BCRP', points: [
-      ['24.Jul.26',3.411],['31.Jul.26',3.400],['03.Ago.26',3.402],['01.Oct.26',3.453],['02.Oct.26',3.436]
-    ]},
-    rates: { asOf: '2026-08', items: [
-      ['Caja Arequipa','caja',8.50],['Caja Huancayo','caja',8.25],['Caja Piura','caja',8.00],
-      ['Caja Cusco','caja',7.13],['Caja Incasur','caja',6.04],['Caja Los Andes','caja',5.96],
-      ['Caja Maynas','caja',5.94],['Caja Del Centro','caja',5.88],['Financiera Efectiva','fin',5.87],
-      ['Interbank','banco',3.76],['Banco Falabella','banco',3.65],['Santander','banco',3.44],
-      ['BBVA','banco',3.27],['Scotiabank','banco',3.07],['BCP','banco',2.87]
-    ]}
-  };
+  const DEFAULT_RAW = {"version":1,"updated":"2026-10-18","inflation":{"source":"BCRP/INEI","points":[["Ene.2024",3.02],["Feb.2024",3.29],["Mar.2024",3.05],["Abr.2024",2.42],["May.2024",2],["Jun.2024",2.29],["Jul.2024",2.13],["Ago.2024",2.03],["Sep.2024",1.78],["Oct.2024",2.01],["Nov.2024",2.27],["Dic.2024",1.97],["Ene.2025",1.85],["Feb.2025",1.48],["Mar.2025",1.28],["Abr.2025",1.65],["May.2025",1.69],["Jun.2025",1.69],["Jul.2025",1.69],["Ago.2025",1.11],["Sep.2025",1.36],["Oct.2025",1.35],["Nov.2025",1.37],["Dic.2025",1.51],["Ene.2026",1.7],["Feb.2026",2.21],["Mar.2026",3.8],["Abr.2026",4.01],["May.2026",3.91],["Jun.2026",4.01],["Jul.2026",4.07],["Ago.2026",4.44],["Sep.2026",4.55]]},"fx":{"source":"BCRP","points":[["24.Jul.26",3.411],["31.Jul.26",3.4],["03.Ago.26",3.402],["01.Oct.26",3.453],["02.Oct.26",3.436],["15.Oct.26",3.432]]},"rates":{"source":"SBS","asOf":"2026-10-16","items":[["Caja Maynas","caja",5.75],["Caja Metropolitana","caja",5.71],["Financiera Confianza","fin",5.7],["Caja Paita","caja",5.59],["Efectiva","banco",5.52],["Financiera Proempresa","fin",5.5],["InFinance XP","fin",5.37],["Caja Ica","caja",5.35],["Financiera Surgir","fin",5.29],["Caja Tacna","caja",5.27],["Caja Arequipa","caja",5.12],["Caja Cusco","caja",5.05],["Caja Huancayo","caja",5.04],["Financiera Qapaq","fin",4.98],["Caja Piura","caja",4.82],["BCI","banco",4.81],["Mibanco","banco",4.78],["Alfin Banco","banco",4.67],["Compartamos","banco",4.67],["Banco Pichincha","banco",4.6],["Santander","banco",4.55],["Scotiabank","banco",4.45],["Interbank","banco",4.37],["Banco GNB","banco",4.36],["Banco de Comercio","banco",4.29],["Caja Trujillo","caja",4.18],["Caja Del Santa","caja",4.14],["Banco Ripley","banco",4.0],["Banco Falabella","banco",3.69],["BBVA","banco",3.67],["BanBif","banco",3.62],["Santander Consumer","banco",3.42],["BCP","banco",2.99]]},"bankAvg":{"source":"BCRP","period":"Sep.2026","value":4.63},"markets":{"source":"BCRP","items":{"fxBuy":[["10.Set.26",3.367],["11.Set.26",3.363],["14.Set.26",3.373],["15.Set.26",3.372],["16.Set.26",3.361],["17.Set.26",3.36],["18.Set.26",3.354],["21.Set.26",3.35],["22.Set.26",3.356],["23.Set.26",3.38],["24.Set.26",3.4],["25.Set.26",3.416],["28.Set.26",3.432],["29.Set.26",3.441],["30.Set.26",3.429],["01.Oct.26",3.447],["02.Oct.26",3.437],["05.Oct.26",3.423],["06.Oct.26",3.431],["07.Oct.26",3.446],["09.Oct.26",3.45],["12.Oct.26",3.434],["13.Oct.26",3.434],["14.Oct.26",3.434],["15.Oct.26",3.426]],"copper":[["10.Set.26",652.719],["11.Set.26",645.848],["14.Set.26",637.025],["15.Set.26",637.07],["16.Set.26",645.326],["17.Set.26",653.196],["18.Set.26",659.024],["21.Set.26",670.772],["22.Set.26",671.181],["23.Set.26",668.368],["24.Set.26",669.729],["25.Set.26",668.595],["28.Set.26",659.727],["29.Set.26",656.552],["30.Set.26",657.119],["01.Oct.26",650.225],["02.Oct.26",651.132],["05.Oct.26",654.534],["06.Oct.26",657.936],["07.Oct.26",658.163],["08.Oct.26",658.888],["09.Oct.26",666.282],["12.Oct.26",672.315],["13.Oct.26",668.641],["14.Oct.26",669.094]],"gold":[["10.Set.26",4318.19],["11.Set.26",4349.08],["14.Set.26",4299.64],["15.Set.26",4292.15],["16.Set.26",4263.65],["17.Set.26",4341.7],["18.Set.26",4378.63],["21.Set.26",4343.43],["22.Set.26",4360.72],["23.Set.26",4287.65],["24.Set.26",4275.03],["25.Set.26",4284.81],["28.Set.26",4115.71],["29.Set.26",4182.31],["30.Set.26",4157.41],["01.Oct.26",4177.66],["02.Oct.26",4141.19],["05.Oct.26",4139.5],["06.Oct.26",4164.18],["07.Oct.26",4111.23],["08.Oct.26",4132.5],["09.Oct.26",4194.24],["12.Oct.26",4172.23],["13.Oct.26",4160.74],["14.Oct.26",4105.37]],"ref":[["10.Set.26",4.25],["11.Set.26",4.25],["14.Set.26",4.25],["15.Set.26",4.25],["16.Set.26",4.25],["17.Set.26",4.25],["18.Set.26",4.25],["21.Set.26",4.25],["22.Set.26",4.25],["23.Set.26",4.25],["24.Set.26",4.25],["25.Set.26",4.25],["28.Set.26",4.25],["29.Set.26",4.25],["30.Set.26",4.25],["01.Oct.26",4.25],["02.Oct.26",4.25],["05.Oct.26",4.25],["06.Oct.26",4.25],["07.Oct.26",4.25],["09.Oct.26",4.25],["12.Oct.26",4.25],["13.Oct.26",4.25],["14.Oct.26",4.25],["15.Oct.26",4.25],["16.Oct.26",4.25]],"bond10":[["10.Set.26",6.48],["11.Set.26",6.49],["14.Set.26",6.53],["15.Set.26",6.59],["16.Set.26",6.6],["17.Set.26",6.59],["18.Set.26",6.602],["21.Set.26",6.56],["22.Set.26",6.52],["23.Set.26",6.62],["24.Set.26",6.69],["25.Set.26",6.72],["28.Set.26",6.72],["29.Set.26",6.68],["30.Set.26",6.66],["01.Oct.26",6.63],["02.Oct.26",6.58],["05.Oct.26",6.56],["06.Oct.26",6.51],["07.Oct.26",6.53],["09.Oct.26",6.51],["12.Oct.26",6.52],["13.Oct.26",6.51],["14.Oct.26",6.52],["15.Oct.26",6.53]],"bvl":[["10.Set.26",59373.28],["11.Set.26",59184.75],["14.Set.26",58641.32],["15.Set.26",58496.57],["16.Set.26",58965.05],["17.Set.26",60023.65],["18.Set.26",59344.04],["21.Set.26",59529.36],["22.Set.26",60625.42],["23.Set.26",59677],["24.Set.26",59934.37],["25.Set.26",60698.35],["28.Set.26",60220.45],["29.Set.26",60410.88],["30.Set.26",59831.84],["01.Oct.26",59751.67],["02.Oct.26",59860.04],["05.Oct.26",60220.93],["06.Oct.26",60766.81],["07.Oct.26",59725],["09.Oct.26",60956.11],["12.Oct.26",60645.95],["13.Oct.26",60511.74],["14.Oct.26",59543.73],["15.Oct.26",60210.69]]}}};
 
   // ===================== VALIDACIÓN =====================
   function isNum(v, lo, hi) { return typeof v === 'number' && Number.isFinite(v) && v >= lo && v <= hi; }
@@ -84,7 +66,17 @@
         LABEL_RE.test(d.bankAvg.period) && isNum(d.bankAvg.value, 0, 25)) {
       bankAvg = { period: d.bankAvg.period, value: d.bankAvg.value };
     }
-    return { updated: d.updated, inflation: inflation, fx: fx, rates: rates, ratesAsOf: asOf, ratesSource: source, bankAvg: bankAvg };
+    let markets = null;
+    if (d.markets && typeof d.markets === 'object' && d.markets.items && typeof d.markets.items === 'object') {
+      markets = {};
+      Object.keys(MKT_RANGES).forEach(function (k) {
+        if (!Object.prototype.hasOwnProperty.call(d.markets.items, k)) return;
+        const pts = validPoints(d.markets.items[k], MKT_RANGES[k][0], MKT_RANGES[k][1]);
+        if (pts) markets[k] = pts;
+      });
+      if (!Object.keys(markets).length) markets = null;
+    }
+    return { updated: d.updated, inflation: inflation, fx: fx, rates: rates, ratesAsOf: asOf, ratesSource: source, bankAvg: bankAvg, markets: markets };
   }
 
   const DEFAULT_DATA = validateData(DEFAULT_RAW);
@@ -236,7 +228,7 @@
     if (name === 'calc') renderComp();
     if (name === 'ahorros') renderDeps();
   }
-  const SUBS = ['grati', 'cts', 'comp', 'meta'];
+  const SUBS = ['conv', 'neto', 'grati', 'cts', 'comp', 'meta'];
   function goSub(name) {
     if (SUBS.indexOf(name) < 0) return;
     document.querySelectorAll('.subtabs button').forEach(function (bt) { bt.classList.toggle('active', bt.dataset.sub === name); });
@@ -277,10 +269,66 @@
         readout: $('infReadout'), readFmt: function (i) { return fmtPct(inf[i].v); }, aria: 'Inflación anual' });
     }
 
+    const buy = lastBuy();
+    setText('fxBuySell', buy ? 'Compra S/ ' + buy.v.toFixed(3) + ' · Venta S/ ' + last.v.toFixed(3) + ' (promedio bancos)' : '');
+    renderMercados();
+
     const best = d.rates.slice().sort(function (a, c) { return c.rate - a.rate; })[0];
     setText('bestRate', fmtPct(best.rate));
     setText('bestName', best.name);
     setText('bestBadge', d.ratesSource === 'SBS' ? 'Promedio SBS · plazo fijo' : 'Plazo fijo en soles');
+  }
+
+  function lastBuy() {
+    const m = state.data.markets;
+    return m && m.fxBuy ? m.fxBuy[m.fxBuy.length - 1] : null;
+  }
+
+  const MKT_VIEW = [
+    { k: 'bvl', lbl: '📈 Bolsa de Lima (índice general)', fmt: function (v) { return v.toLocaleString('es-PE', { maximumFractionDigits: 0 }) + ' pts'; }, rel: true, spark: true },
+    { k: 'gold', lbl: '🥇 Oro', fmt: function (v) { return 'US$ ' + v.toLocaleString('es-PE', { maximumFractionDigits: 0 }) + ' /oz'; }, rel: true, spark: true },
+    { k: 'copper', lbl: '🟠 Cobre', fmt: function (v) { return 'US$ ' + (v / 100).toFixed(2) + ' /lb'; }, rel: true, spark: true },
+    { k: 'ref', lbl: '🏛️ Tasa de referencia BCRP', fmt: function (v) { return fmtPct(v); }, rel: false },
+    { k: 'bond10', lbl: '📜 Bono Perú 10 años (S/)', fmt: function (v) { return fmtPct(v); }, rel: false }
+  ];
+
+  function renderMercados() {
+    const card = $('mktCard'), grid = $('mktGrid');
+    const m = state.data.markets;
+    grid.replaceChildren();
+    if (!m) { card.classList.add('hidden'); return; }
+    card.classList.remove('hidden');
+    MKT_VIEW.forEach(function (cfg) {
+      const pts = m[cfg.k];
+      if (!pts || !pts.length) return;
+      const last = pts[pts.length - 1], prev = pts.length > 1 ? pts[pts.length - 2] : null;
+      let chgText = '', chgCls = 'chg';
+      if (prev) {
+        const delta = last.v - prev.v;
+        if (cfg.rel) {
+          const pct = prev.v ? delta / prev.v * 100 : 0;
+          chgText = (pct >= 0 ? '▲ +' : '▼ ') + pct.toFixed(2).replace('.', ',') + '%';
+        } else {
+          chgText = Math.abs(delta) < 0.005 ? 'Sin cambio' : (delta > 0 ? '▲ +' : '▼ ') + delta.toFixed(2).replace('.', ',') + ' pts';
+        }
+        if (Math.abs(delta) >= 0.005) chgCls += delta > 0 ? ' pos' : ' neg';
+      }
+      const tile = el('div', 'mkt', [
+        el('div', 'lbl', cfg.lbl),
+        el('div', 'val', cfg.fmt(last.v)),
+        el('div', chgCls, chgText),
+        el('div', 'when', 'al ' + last.name)
+      ]);
+      grid.append(tile);
+      if (cfg.spark && pts.length > 2) {
+        const host = el('div', 'chart mini');
+        tile.append(host);
+        if (host.offsetParent) {
+          lineChart(host, { spark: true, height: 30, labels: pts.map(function (p) { return p.name; }),
+            series: [{ values: pts.map(function (p) { return p.v; }), color: '#6b7280', width: 1.5 }], aria: cfg.lbl });
+        }
+      }
+    });
   }
 
   function renderStatus() {
@@ -348,6 +396,48 @@
     lines.forEach(function (l) { box.append(el('div', null, [l[0] + ': ', b(l[1])])); });
     if (total) box.append(el('span', 'total', total));
     if (note) box.append(el('span', 'note', note));
+  }
+
+  function renderConv() {
+    const monto = num('cvMonto', 0, 1e9, 0);
+    const dir = pick('cvDir', ['usd2pen', 'pen2usd'], 'usd2pen');
+    const fx = state.data.fx, venta = fx[fx.length - 1];
+    const buy = lastBuy();
+    const compraV = buy ? buy.v : venta.v;
+    if (dir === 'usd2pen') {
+      result('cvRes', [['Tipo de cambio compra', 'S/ ' + compraV.toFixed(3)]], 'US$ ' + monto.toLocaleString('es-PE', { maximumFractionDigits: 2 }) + ' = ' + fmtS(monto * compraV, 2));
+    } else {
+      result('cvRes', [['Tipo de cambio venta', 'S/ ' + venta.v.toFixed(3)]], fmtS(monto, 2) + ' = US$ ' + (monto / venta.v).toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+    }
+    $('cvNote').textContent = 'Promedio del sistema bancario (SBS/BCRP) al ' + (buy && dir === 'usd2pen' ? buy.name : venta.name) +
+      '. Cuando vendes dólares se usa el precio de compra del banco, y cuando compras dólares, el de venta. Casas de cambio y apps suelen ofrecer un precio algo mejor.';
+  }
+
+  function renderNeto() {
+    const s = num('nSueldo', 0, 1e6, 0);
+    const tipo = pick('nPension', ['mixta', 'flujo', 'onp'], 'mixta');
+    $('nFlujoBox').classList.toggle('hidden', tipo !== 'flujo');
+    let pension, etiqueta;
+    if (tipo === 'onp') {
+      pension = s * 0.13; etiqueta = 'ONP (13%)';
+    } else {
+      const com = tipo === 'flujo' ? num('nFlujo', 0, 3, 1.55) : 0;
+      pension = s * 0.10 + Math.min(s, TOPE_AFP) * 0.0137 + s * com / 100;
+      etiqueta = 'AFP (10% + prima 1,37%' + (tipo === 'flujo' ? ' + comisión ' + fmtPct(com) : '') + ')';
+    }
+    const neta = Math.max(0, s * 14 - 7 * UIT_2026);
+    const tramos = [[5, 0.08], [20, 0.14], [35, 0.17], [45, 0.20], [Infinity, 0.30]];
+    let imp = 0, prevLim = 0;
+    tramos.forEach(function (t) {
+      const lim = t[0] * UIT_2026;
+      if (neta > prevLim) imp += (Math.min(neta, lim) - prevLim) * t[1];
+      prevLim = lim;
+    });
+    const quinta = imp / 12;
+    const neto = Math.max(0, s - pension - quinta);
+    result('nRes', [[etiqueta, '− ' + fmtS(pension, 2)], ['Impuesto a la renta 5ta (aprox. mensual)', '− ' + fmtS(quinta, 2)]],
+      'Sueldo neto: ' + fmtS(neto, 2),
+      s > 0 ? 'Recibes el ' + (neto / s * 100).toFixed(1).replace('.', ',') + '% de tu sueldo bruto. En julio y diciembre recibes además tu gratificación + 9%.' : '');
   }
 
   function renderGrati() {
@@ -512,7 +602,7 @@
   window.addEventListener('appinstalled', function () { const btn = $('installBtn'); if (btn) btn.classList.add('hidden'); });
 
   // ===================== ARRANQUE =====================
-  function renderAll() { renderStatus(); renderInicio(); renderRates(); renderGrati(); renderCts(); renderComp(); renderMeta(); renderDeps(); }
+  function renderAll() { renderStatus(); renderInicio(); renderRates(); renderConv(); renderNeto(); renderGrati(); renderCts(); renderComp(); renderMeta(); renderDeps(); }
 
   function restoreInputs() {
     const m = parseFloat(store.get('monto', '25500'));
@@ -528,6 +618,8 @@
     document.querySelectorAll('[data-go]').forEach(function (bt) { bt.addEventListener('click', function () { go(bt.dataset.go); }); });
     document.querySelectorAll('.subtabs button').forEach(function (bt) { bt.addEventListener('click', function () { goSub(bt.dataset.sub); }); });
     ['monto', 'plazo', 'miTasa'].forEach(function (id) { $(id).addEventListener('input', renderRates); });
+    ['cvMonto', 'cvDir'].forEach(function (id) { $(id).addEventListener('input', renderConv); });
+    ['nSueldo', 'nPension', 'nFlujo'].forEach(function (id) { $(id).addEventListener('input', renderNeto); });
     ['gSueldo', 'gMeses', 'gReg'].forEach(function (id) { $(id).addEventListener('input', renderGrati); });
     ['cSueldo', 'cMeses'].forEach(function (id) { $(id).addEventListener('input', renderCts); });
     ['pIni', 'pAporte', 'pTasa', 'pAnios'].forEach(function (id) { $(id).addEventListener('input', renderComp); });

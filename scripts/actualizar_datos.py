@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
 Actualiza data/data.json con datos oficiales:
-  - Dólar, inflación y promedio de tasas de bancos (depósitos a plazo > 360 días): API del BCRP.
+  - Dólar (compra y venta), inflación, promedio de tasas de bancos, Bolsa de Lima, oro, cobre,
+    tasa de referencia y bono soberano a 10 años: API oficial del BCRP.
   - Las tasas por entidad (SBS) NO se consultan automáticamente: la web de la SBS tiene
     protección anti-robots. Se mantienen las guardadas en data.json.
 
@@ -360,6 +361,101 @@ def actualizar_prom_bancos(nueva, hoy, descargar_fn=descargar):
     return [f"promedio bancos {etiqueta} = {valor}%"], []
 
 
+# ---------------------------------------------------------------- mercados (BCRP, diario)
+# Una sola consulta con varias series diarias (la API permite hasta 10 de la misma frecuencia).
+# El BCRP puede devolverlas en otro orden: se identifican por NOMBRE, nunca por posición.
+MERCADOS = {
+    #  clave:   (código,      patrón del nombre BCRP,                      mín,   máx,     salto máx, tipo de salto)
+    "bvl":    ("PD38026MD", r"General Burs[aá]til BVL \(.ndice\)",       1000,  500000,  0.15, "rel"),
+    "gold":   ("PD04704XD", r"\bOro\b",                                  100,   20000,   0.15, "rel"),
+    "copper": ("PD04701XD", r"\bCobre\b",                                50,    3000,    0.15, "rel"),
+    "ref":    ("PD12301MD", r"Tasa de Referencia",                         0,     20,      1.0,  "abs"),
+    "bond10": ("PD31893DD", r"Bono del gobierno peruano a 10 a.os \(en S/\)", 0,  25,     1.5,  "abs"),
+    "fxBuy":  ("PD04639PD", r"Sistema bancario SBS.*Compra",               1,     10,      0.25, "abs"),
+}
+MAX_MERCADO_PUNTOS = 30
+
+
+def leer_series_por_nombre(codigos, ini, fin, descargar_fn=descargar):
+    """Devuelve [(nombre_serie, [(etiqueta, valor), ...]), ...] o None si no hubo respuesta útil."""
+    texto = descargar_fn(API.format(serie="-".join(codigos), ini=ini, fin=fin))
+    if not texto:
+        return None
+    a, b = texto.find("{"), texto.rfind("}")
+    if a == -1 or b == -1:
+        return None
+    try:
+        data = json.loads(texto[a:b + 1])
+        nombres = [str(x["name"]) for x in data["config"]["series"]]
+        periodos = data["periods"]
+    except (ValueError, KeyError, TypeError):
+        return None
+    salida = [(n, []) for n in nombres]
+    for p in periodos:
+        try:
+            etiqueta = str(p["name"]).strip()
+            valores = p["values"]
+        except (KeyError, TypeError):
+            continue
+        for i, crudo in enumerate(valores[:len(nombres)]):
+            try:
+                v = float(crudo)
+            except (TypeError, ValueError):
+                continue  # "n.d."
+            if v == v:
+                salida[i][1].append((etiqueta, v))
+    return salida
+
+
+def validar_mercado(puntos, minimo, maximo, salto, tipo, nombre):
+    previo = None
+    for etiqueta, v in puntos:
+        if not LABEL_RE.match(etiqueta):
+            raise DatosSospechosos(f"{nombre}: etiqueta inválida {etiqueta!r}")
+        clave_dia(etiqueta)
+        if not (minimo <= v <= maximo):
+            raise DatosSospechosos(f"{nombre}: valor fuera de rango {etiqueta}={v}")
+        if previo is not None:
+            cambio = abs(v - previo) / previo if tipo == "rel" and previo else abs(v - previo)
+            if cambio > salto:
+                raise DatosSospechosos(f"{nombre}: salto anormal a {etiqueta} ({previo} -> {v})")
+        previo = v
+
+
+def actualizar_mercados(nueva, hoy, descargar_fn=descargar):
+    """Actualiza nueva['markets']. Devuelve (cambios, alertas). Cada serie es independiente."""
+    ini = (hoy - timedelta(days=45)).strftime("%Y-%m-%d")
+    fin = hoy.strftime("%Y-%m-%d")
+    series = leer_series_por_nombre([c[0] for c in MERCADOS.values()], ini, fin, descargar_fn)
+    if not series:
+        print("  BCRP sin datos de mercados: se conservan los anteriores.")
+        return [], []
+    actuales = (nueva.get("markets") or {}).get("items") or {}
+    items = {k: [list(p) for p in v] for k, v in actuales.items() if k in MERCADOS}
+    cambios, alertas = [], []
+    for clave, (codigo, patron, mn, mx, salto, tipo) in MERCADOS.items():
+        encontrados = [pts for nombre, pts in series if re.search(patron, nombre, re.I)]
+        if len(encontrados) != 1 or not encontrados[0]:
+            continue  # serie ausente o sin datos hoy: se conserva lo anterior
+        nuevos = [(e, round(v, 3)) for e, v in encontrados[0]]
+        previos = [tuple(p) for p in items.get(clave, [])]
+        try:
+            validar_mercado(nuevos, mn, mx, salto, tipo, clave)
+            fusion = fusionar(previos, nuevos, clave_dia, MAX_MERCADO_PUNTOS)
+            validar_mercado(fusion[-(len(nuevos) + 1):], mn, mx, salto, tipo, clave + " (fusionado)")
+            if previos and clave_dia(fusion[-1][0]) < clave_dia(previos[-1][0]):
+                raise DatosSospechosos(f"{clave}: el dato más reciente retrocedió en el tiempo")
+        except DatosSospechosos as e:
+            alertas.append(str(e))
+            continue
+        if fusion != previos:
+            cambios.append(f"{clave} {fusion[-1][0]}={fusion[-1][1]}")
+        items[clave] = [list(p) for p in fusion]
+    if items:
+        nueva["markets"] = {"source": "BCRP", "items": items}
+    return cambios, alertas
+
+
 # ---------------------------------------------------------------- validación final (igual que la app)
 def validar_data(d):
     def puntos(arr, lo, hi):
@@ -379,6 +475,12 @@ def validar_data(d):
         assert isinstance(r[0], str) and LABEL_RE.match(r[0])
         assert r[1] in ("caja", "banco", "fin")
         assert isinstance(r[2], (int, float)) and 0 <= r[2] <= 25
+    if "markets" in d:
+        m = d["markets"]
+        assert isinstance(m, dict) and isinstance(m.get("items"), dict)
+        for k, pts in m["items"].items():
+            assert k in MERCADOS
+            puntos(pts, MERCADOS[k][2], MERCADOS[k][3])
     if "bankAvg" in d:
         b = d["bankAvg"]
         assert isinstance(b, dict) and isinstance(b.get("period"), str) and LABEL_RE.match(b["period"])
@@ -459,11 +561,16 @@ def main(argv):
     cambios += c_prom
     alertas += a_prom
 
-    # 3) Tasas por entidad: la web de la SBS bloquea a propósito el acceso automático
+    # 3) Mercados: bolsa, oro, cobre, tasa de referencia, bono 10 años y dólar compra
+    c_mkt, a_mkt = actualizar_mercados(nueva, hoy)
+    cambios += c_mkt
+    alertas += a_mkt
+
+    # 4) Tasas por entidad: la web de la SBS bloquea a propósito el acceso automático
     #    (protección anti-robots), así que NO se consultan aquí. Se conservan las de data.json,
     #    que se actualizan aparte leyendo la SBS como una visita normal de navegador.
 
-    # 4) Validación final idéntica a la de la app antes de escribir
+    # 5) Validación final idéntica a la de la app antes de escribir
     try:
         validar_data(nueva)
     except Exception as e:  # noqa: BLE001

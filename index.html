@@ -39,6 +39,7 @@
           <span class="big" id="fxVal">—</span>
           <span class="sub" id="fxDelta"></span>
         </div>
+        <div class="sub" id="fxBuySell"></div>
         <div class="chart spark" id="fxSpark"></div>
       </div>
       <div class="grid2">
@@ -60,6 +61,11 @@
         <h2>Inflación — evolución (banda verde = meta BCRP 1–3%)</h2>
         <div class="chart" id="infChart"></div>
         <div class="readout" id="infReadout">Toca el gráfico para ver cada mes</div>
+      </div>
+      <div class="card hidden" id="mktCard">
+        <h2>📊 Mercados y economía</h2>
+        <div class="mkt-grid" id="mktGrid"></div>
+        <p class="disclaimer">Fuente: BCRP (cierre del último día disponible). Información referencial, no es recomendación de inversión.</p>
       </div>
       <div class="card mobile-only">
         <h2>Accesos rápidos</h2>
@@ -107,14 +113,46 @@
     <!-- ============ CALCULADORAS ============ -->
     <section class="view" id="v-calc">
       <div class="subtabs">
-        <button type="button" class="active" data-sub="grati">Gratificación</button>
+        <button type="button" class="active" data-sub="conv">Dólares</button>
+        <button type="button" data-sub="neto">Sueldo neto</button>
+        <button type="button" data-sub="grati">Gratificación</button>
         <button type="button" data-sub="cts">CTS</button>
         <button type="button" data-sub="comp">Interés compuesto</button>
         <button type="button" data-sub="meta">Meta de ahorro</button>
       </div>
       <div class="calc-grid">
+      <div class="subview active" id="s-conv">
+        <div class="card">
+          <h2>💱 Conversor de dólares</h2>
+          <div class="grid2">
+            <div class="field"><label for="cvMonto">Monto</label><input type="number" id="cvMonto" inputmode="decimal" value="100" min="0" max="1000000000" step="10"></div>
+            <div class="field"><label for="cvDir">Quiero</label>
+              <select id="cvDir"><option value="usd2pen" selected>Dólares → soles</option><option value="pen2usd">Soles → dólares</option></select>
+            </div>
+          </div>
+          <div class="result" id="cvRes"></div>
+          <p class="disclaimer" id="cvNote"></p>
+        </div>
+      </div>
 
-      <div class="subview active" id="s-grati">
+      <div class="subview" id="s-neto">
+        <div class="card">
+          <h2>💼 ¿Cuánto recibo de sueldo neto?</h2>
+          <div class="field"><label for="nSueldo">Sueldo bruto mensual (S/)</label><input type="number" id="nSueldo" inputmode="decimal" value="3000" min="0" max="1000000" step="50"></div>
+          <div class="field"><label for="nPension">Sistema de pensiones</label>
+            <select id="nPension">
+              <option value="mixta" selected>AFP – comisión mixta (sobre saldo)</option>
+              <option value="flujo">AFP – comisión sobre flujo</option>
+              <option value="onp">ONP</option>
+            </select>
+          </div>
+          <div class="field hidden" id="nFlujoBox"><label for="nFlujo">Comisión sobre flujo de tu AFP (%) — entre 1,47% y 1,69%</label><input type="number" id="nFlujo" inputmode="decimal" value="1.55" min="0" max="3" step="0.01"></div>
+          <div class="result" id="nRes"></div>
+          <p class="disclaimer">Referencial 2026: UIT S/ 5,500. AFP: aporte 10% + prima de seguro 1,37% (con tope de remuneración asegurable ~S/ 12,672). ONP 13%. Renta de 5ta categoría estimada con 14 sueldos al año (incluye gratificaciones), deducción de 7 UIT y escala de 8% a 30%. No incluye asignación familiar, horas extra ni la deducción adicional de 3 UIT por gastos.</p>
+        </div>
+      </div>
+
+      <div class="subview" id="s-grati">
         <div class="card">
           <h2>🎁 ¿Cuánto me toca de grati?</h2>
           <div class="field"><label for="gSueldo">Sueldo bruto mensual (S/)</label><input type="number" id="gSueldo" inputmode="decimal" value="2500" min="0" max="1000000" step="50"></div>
